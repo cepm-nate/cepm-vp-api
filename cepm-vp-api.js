@@ -1,4 +1,4 @@
-require('dotenv').config();
+if (!process.env.LDAP_URL) require('dotenv').config();
 const compression = require("compression");
 const express = require("express"); // call express
 const app = express(); // define our app using express

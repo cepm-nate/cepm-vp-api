@@ -6,9 +6,6 @@ WORKDIR /app
 # Copy package files first (for better caching)
 COPY package*.json ./
 
-# Create a fake .env files
-COPY .env.example .env
-
 # Install production deps only
 RUN npm ci --only=production
 
