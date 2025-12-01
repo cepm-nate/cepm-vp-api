@@ -7,6 +7,20 @@ services:
     restart: unless-stopped
     ports:
       - "12980:12980"  # Host:Container – matches your current setup
+    environment:
+      LDAP_URL: ${LDAP_URL}
+      LDAP_SEARCH_BASE: ${LDAP_SEARCH_BASE}
+      LDAP_SEARCH_FILTER: ${LDAP_SEARCH_FILTER}
+      JWT_SECRET: ${JWT_SECRET}
+      DOMAIN_PREPEND: ${DOMAIN_PREPEND}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_SERVER: ${DB_SERVER}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USE_UTC: ${DB_USE_UTC}
+      DB_POOL_MIN: ${DB_POOL_MIN}
+      DB_POOL_MAX: ${DB_POOL_MAX}
+      DB_POOL_IDLE_TIMEOUT: ${DB_POOL_IDLE_TIMEOUT}
     # env_file:
     #  - .env  # Loads your .env file (but we'll override/add secrets in Portainer)
 
