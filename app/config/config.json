@@ -1,0 +1,10 @@
+{
+	"ldap": {
+		"_timeout": 5000,
+		"_connectTimeout": 10000,
+		"reconnect": true,
+		"searchAttributes": ["cn","mail","sAMAccountName"],
+		"checkInterval" : 1500,
+		"maxIdleTime" : 1800
+	},
+}
