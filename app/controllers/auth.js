@@ -87,6 +87,11 @@ module.exports = class Auth {
 	authenticate(username, password) {
 		auth = new LdapAuth(ldapSettings);	// Added so it makes a NEW connection for every request.
 
+		// Added to catch error and remove restarts.
+		auth.on('error', (err) => {
+			console.warn('LdapAuth error:', err);
+		});
+
 		return new Promise(function (resolve, reject) {
 			auth.authenticate(username, password, function (err, user) {
 				if(err)
