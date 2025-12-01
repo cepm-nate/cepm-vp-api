@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  cepm-vp-api:
+    build: .  # Builds from the Dockerfile in the same dir
+    container_name: cepm-vp-api
+    restart: unless-stopped
+    ports:
+      - "12980:12980"  # Host:Container – matches your current setup
+    env_file:
+      - .env  # Loads your .env file (but we'll override/add secrets in Portainer)
+
+# Optional: Add this for faster rebuilds on updates
+volumes:
+  cepm_data:
