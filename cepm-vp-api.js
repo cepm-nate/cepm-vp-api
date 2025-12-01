@@ -7,7 +7,6 @@ const fs = require("fs");
 const Emtrx = require("./app/controllers/emtrx");
 const PhyCnts = require("./app/controllers/phycnts");
 const Auth = require("./app/controllers/auth");
-const RSMeans = require("./app/controllers/rsmeans");
 const bodyParser = require("body-parser");
 
 // const socketio 		= require('socket.io');
@@ -20,7 +19,6 @@ app.use(compression());
 const emtrx = new Emtrx();
 const phycnts = new PhyCnts();
 const auth = new Auth();
-const rsmeans = new RSMeans();
 
 var port = process.env.PORT || 12980; // set our port
 
@@ -28,9 +26,6 @@ var port = process.env.PORT || 12980; // set our port
 // const io = socketio.listen(app.server, {
 // 	cookie: false,
 // });
-// Namespace for rsmeans import
-// const rsmeans_io = io.of('/rsmeans');
-// rsmeans_io.on('connection',  rsmeans.onSocketConnection);
 
 // Cross Domain
 // =============================================================================
@@ -221,18 +216,6 @@ router.route("/phycnts").put(isAuthenticated, (req, res) => {
     });
 });
 
-// =================================
-//	rsmeans routes
-// =================================
-router.route("/rsmeans").get((req, res) => {
-  rsmeans
-    .obtainAndImport(req)
-    .then((r) => res.send(r))
-    .catch((e) => {
-      console.warn(e);
-      res.status(500).json(e.message);
-    });
-});
 
 // REGISTER OUR ROUTES -------------------------------
 app.use("/api", router);
