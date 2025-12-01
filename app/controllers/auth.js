@@ -20,6 +20,12 @@ let ldapSettings = {
 
 var auth = new LdapAuth(ldapSettings);
 
+// Added to catch error and remove restarts.
+auth.on('error', (err) => {
+	console.warn('LdapAuth error:', err);
+});
+
+
 // Catch errors so app does not crash
 auth._adminClient.on('error', err => {
 	console.warn('_adminClient: LDAP connection dropped, reconnecting.');
@@ -134,6 +140,10 @@ module.exports = class Auth {
 						// REF: https://github.com/mcavage/node-ldapjs/issues/318
 
 						auth = new LdapAuth(ldapSettings);
+						// Added to catch error and remove restarts.
+            auth.on('error', (err) => {
+           		console.warn('LdapAuth error:', err);
+            });
 						console.log(err);
 						throw new Error('Unexpected Error during authentication');
 					}

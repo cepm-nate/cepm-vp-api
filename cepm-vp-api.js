@@ -9,8 +9,6 @@ const PhyCnts = require("./app/controllers/phycnts");
 const Auth = require("./app/controllers/auth");
 const bodyParser = require("body-parser");
 
-// const socketio 		= require('socket.io');
-
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(allowCrossDomain);
@@ -21,11 +19,6 @@ const phycnts = new PhyCnts();
 const auth = new Auth();
 
 var port = process.env.PORT || 12980; // set our port
-
-// Socket.io
-// const io = socketio.listen(app.server, {
-// 	cookie: false,
-// });
 
 // Cross Domain
 // =============================================================================
@@ -64,27 +57,6 @@ function isAuthenticated(req, res, next) {
   let authMethod = req.headers["x-uuid"]
     ? () => auth.check(req)
     : () => auth.verify(req.headers.token);
-
-  // return authMethod().catch((e) => {
-  //   if (e.message.indexOf("ECONNREFUSED") > -1) {
-  //     console.log("Trying again...");
-  //     return authMethod();
-  //   } else throw e;
-  // })
-  // .then((r) => next())
-  // .catch((e) => {
-  //   console.log(
-  //     "... failed authentication for",
-  //     req.headers.username,
-  //     e.message,
-  //   );
-  //   if (e.response) {
-  //     res.status(e.response.status).json({ message: e.response.data.error });
-  //     console.warn(e.response.data.error);
-  //   } else {
-  //     res.status(500).json({ message: e.message });
-  //   }
-  // });
 
   Promise.all([])
     .then(function () {
@@ -219,7 +191,6 @@ router.route("/phycnts").put(isAuthenticated, (req, res) => {
 
 // REGISTER OUR ROUTES -------------------------------
 app.use("/api", router);
-// app.use('/',router);
 
 // START THE SERVER
 // =============================================================================
