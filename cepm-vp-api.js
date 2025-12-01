@@ -194,6 +194,6 @@ app.use("/api", router);
 
 // START THE SERVER
 // =============================================================================
-app.listen(port, "127.0.0.1", function () {
+app.listen(port, "0.0.0.0", function () {
   console.log("CEPM-VP-API calls happen on port " + port);
 });
