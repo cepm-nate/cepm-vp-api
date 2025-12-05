@@ -6,5 +6,5 @@
 		"searchAttributes": ["cn","mail","sAMAccountName"],
 		"checkInterval" : 1500,
 		"maxIdleTime" : 1800
-	},
+	}
 }
