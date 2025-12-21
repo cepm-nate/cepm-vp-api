@@ -9,6 +9,22 @@ const PhyCnts = require("./app/controllers/phycnts");
 const Auth = require("./app/controllers/auth");
 const bodyParser = require("body-parser");
 
+// For tracing
+if (process.env.DD_ENABLED === 'true') {
+  const tracer = require('dd-trace').init({
+    service: 'sm-api',  // Replace with your service name
+    logInjection: true,  // Enables automatic trace ID injection into logs
+    // Optional: Customize Restify plugin if needed (e.g., for allowlist/blocklist of routes)
+    plugins: {
+      express: {
+        middleware: true  // Enables middleware spans (note: may not create sub-spans for all handlers due to known limitations; add custom spans if needed)
+      },
+    }
+  });
+  // For unhandled exceptions, add:
+  process.on('uncaughtException', (err) => { tracer.scope().active()?.addTags({ 'error.type': err.name, 'error.message': err.message, 'error.stack': err.stack }); });
+}
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(allowCrossDomain);
