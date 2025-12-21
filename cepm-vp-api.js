@@ -4,15 +4,16 @@ if (!process.env.LDAP_URL) require('dotenv').config();
 if (process.env.DD_ENABLED === 'true') {
   const tracer = require('dd-trace').init({
     service: 'cepm-api',
-    logInjection: true,  // Enables automatic trace ID injection into logs
-    // Optional: Customize Restify plugin if needed (e.g., for allowlist/blocklist of routes)
+    logInjection: true,
     plugins: {
       express: {
-        middleware: true  // Enables middleware spans (note: may not create sub-spans for all handlers due to known limitations; add custom spans if needed)
+        middleware: true
       },
+      socketio: {
+        enabled: true
+      }
     }
   });
-  // For unhandled exceptions, add:
   process.on('uncaughtException', (err) => { tracer.scope().active()?.addTags({ 'error.type': err.name, 'error.message': err.message, 'error.stack': err.stack }); });
 }
 
