@@ -1,18 +1,9 @@
 if (!process.env.LDAP_URL) require('dotenv').config();
-const compression = require("compression");
-const express = require("express"); // call express
-const app = express(); // define our app using express
-const https = require("https");
-const fs = require("fs");
-const Emtrx = require("./app/controllers/emtrx");
-const PhyCnts = require("./app/controllers/phycnts");
-const Auth = require("./app/controllers/auth");
-const bodyParser = require("body-parser");
 
 // For tracing
 if (process.env.DD_ENABLED === 'true') {
   const tracer = require('dd-trace').init({
-    service: 'sm-api',  // Replace with your service name
+    service: 'cepm-api',
     logInjection: true,  // Enables automatic trace ID injection into logs
     // Optional: Customize Restify plugin if needed (e.g., for allowlist/blocklist of routes)
     plugins: {
@@ -24,6 +15,16 @@ if (process.env.DD_ENABLED === 'true') {
   // For unhandled exceptions, add:
   process.on('uncaughtException', (err) => { tracer.scope().active()?.addTags({ 'error.type': err.name, 'error.message': err.message, 'error.stack': err.stack }); });
 }
+
+const compression = require("compression");
+const express = require("express"); // call express
+const app = express(); // define our app using express
+const https = require("https");
+const fs = require("fs");
+const Emtrx = require("./app/controllers/emtrx");
+const PhyCnts = require("./app/controllers/phycnts");
+const Auth = require("./app/controllers/auth");
+const bodyParser = require("body-parser");
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
