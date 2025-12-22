@@ -5,10 +5,12 @@ const dbConfig = {
   user: process.env.DB_USER,
 	password: process.env.DB_PASSWORD,
 	server: process.env.DB_SERVER,
+	port: process.env.DB_PORT,
 	database: process.env.DB_DATABASE,
   options: {
 		useUTC: !!process.env.DB_USE_UTC, // workaround for lack of boolean support in dot env.
 		enableArithAbort: true, // to silence startup message
+		trustServerCertificate: true, // to handle self-signed SSL certificates
 		pool: {
       min: process.env.DB_POOL_MIN,
       max: process.env.DB_POOL_MAX,
