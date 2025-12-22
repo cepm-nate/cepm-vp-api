@@ -10,6 +10,10 @@ services:
     labels:
       - "com.datadoghq.ad.logs: '[{\"source\": \"nodejs\", \"service\": \"cepm-vp-api\", \"env\":\"prod\"}]'"
     environment:
+      DD_ENABLED: true
+      DD_VERSION: 004
+      DD_ENV: prod
+      DD_SERVICE: cepm-api
       LDAP_URL: ${LDAP_URL}
       LDAP_SEARCH_BASE: ${LDAP_SEARCH_BASE}
       LDAP_SEARCH_FILTER: ${LDAP_SEARCH_FILTER}
