@@ -165,9 +165,14 @@ router.get('/login', async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     let merged = loginResult;
     const vpUserName = req.headers.username || req.query.VPUserName;
+    const vpPass = req.headers.password || req.query.Password;
     if (vpUserName) {
       const api = new API();
-      const extraData = await api.get_login(req.query);
+      const extraData = await api.get_login({
+        ...req.query,
+        Password: vpPass,
+        VPUserName: vpUserName
+      });
       merged = { ...loginResult, ...extraData };
     }
     res.send(merged);
