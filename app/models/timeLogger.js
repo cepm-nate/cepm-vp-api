@@ -110,7 +110,7 @@ class TimeLogger {
     // Replace any ALREADY EXISTING $rseps with
     arr.forEach(line => {
       line.forEach(field => {
-        strToReturn += field.toString().replace(new RegExp(rsep, 'g'), String.fromCharCode(10)) + fsep;
+        strToReturn += String(field).replace(new RegExp(rsep, 'g'), String.fromCharCode(10)) + fsep;
       });
       // remove the last fsep
       strToReturn = strToReturn.slice(0, -fsep.length);

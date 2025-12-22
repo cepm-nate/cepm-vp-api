@@ -141,7 +141,7 @@ class MU {
 
     for (const line of arr) {
       for (const field of line) {
-        strToReturn += field.toString() + fsep;
+        strToReturn += String(field) + fsep;
       }
       // remove the last fsep
       strToReturn = strToReturn.slice(0, -fsep.length);

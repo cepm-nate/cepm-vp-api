@@ -212,7 +212,7 @@ class Equipment {
 
     for (const line of arr) {
       for (const field of line) {
-        strToReturn += field.toString().replace(new RegExp(rsep, 'g'), String.fromCharCode(10)) + fsep;
+        strToReturn += String(field).replace(new RegExp(rsep, 'g'), String.fromCharCode(10)) + fsep;
       }
       // Remove the last fsep
       strToReturn = strToReturn.slice(0, -fsep.length);
