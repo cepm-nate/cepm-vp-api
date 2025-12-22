@@ -10,7 +10,10 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install production deps only
-RUN npm ci --only=production
+RUN npm install --only=production
+
+# Remove build dependencies to slim the image
+RUN apk del python3 make g++
 
 # Copy the rest of your app
 COPY . .
