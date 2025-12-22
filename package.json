@@ -23,7 +23,6 @@
     "ldapauth-fork": "^6.1.0",
     "moment": "^2.24.0",
     "mssql": "^6.0.1",
-    "multer": "^2.0.2",
     "node-fetch": "^2.6.7",
     "object.values": "^1.1.1",
     "promise": "^8.3.0",

@@ -23,12 +23,7 @@ services:
       DB_POOL_MIN: ${DB_POOL_MIN}
       DB_POOL_MAX: ${DB_POOL_MAX}
       DB_POOL_IDLE_TIMEOUT: ${DB_POOL_IDLE_TIMEOUT}
-    networks:
-      - tracing-net
 
 # Optional: Add this for faster rebuilds on updates
 volumes:
   cepm_data:
-networks:
-  tracing-net:
-    external: true
