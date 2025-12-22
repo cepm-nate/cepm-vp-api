@@ -1,5 +1,8 @@
 # Lightweight Node base image
-FROM node:20-alpine
+FROM node:22-alpine
+
+# Install build dependencies for native modules
+RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
