@@ -276,8 +276,9 @@ class API {
     }
 
     const outputs = result.recordset;
-    outputs[0]['SecurityGroups'] = outputs[0]['SecurityGroups'].split(',').map(Number);
+    if (!outputs) return { user: outputs, message: result.output.ReturnMessage };
 
+    outputs[0]['SecurityGroups'] = outputs[0]['SecurityGroups'].split(',').map(Number);
     return { user: outputs, message: result.output.ReturnMessage };
   }
 
