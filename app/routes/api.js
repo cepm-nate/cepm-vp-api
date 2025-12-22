@@ -18,6 +18,21 @@ const JobPhase = require('../models/jobPhase');
 const MO = require('../models/mo');
 const MU = require('../models/mu');
 const Attachment = require('../models/attachment');
+
+// Helper function to parse request body
+function parseBody(body) {
+  try {
+    if (typeof body === 'string') {
+      return JSON.parse(body);
+    } else if (typeof body === 'object' && body !== null) {
+      return body;
+    } else {
+      return null;
+    }
+  } catch (e) {
+    return null;
+  }
+}
 const PhoneGapBuild = require('../models/phoneGapBuild');
 
 
@@ -339,7 +354,11 @@ router.put('/', isAuthenticated, async (req, res) => {
   try {
     const api = new API();
     const userAgent = req.get('User-Agent');
-    const result = await api.put(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await api.put(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -356,8 +375,12 @@ router.put('/', isAuthenticated, async (req, res) => {
 // Receive Local Storage
 router.put('/receiveLocalStorage', async (req, res) => {
   try {
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
     const filePath = path.join(__dirname, '../../localStorage.txt');
-    fs.writeFileSync(filePath, req.body.LocalStorage);
+    fs.writeFileSync(filePath, data.LocalStorage);
     res.set('Access-Control-Allow-Origin', '*');
     res.json({ message: 'Just some random data!' });
   } catch (error) {
@@ -370,13 +393,18 @@ router.put('/INPhyCountToAdjBatch', isAuthenticated, async (req, res) => {
   try {
     const api = new API();
     const userAgent = req.get('User-Agent');
-    const result = await api.put_inv_worksheet_to_adj(req.body, userAgent);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await api.put_inv_worksheet_to_adj(data, userAgent);
     res.set('Access-Control-Allow-Origin', '*');
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 // Upload SQLite
 router.post('/uploadSQLite', upload.single('file'), async (req, res) => {
@@ -394,13 +422,16 @@ router.post('/uploadSQLite', upload.single('file'), async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 // Generic SAVER
 router.post('/', isAuthenticated, async (req, res) => {
   try {
     const api = new API();
     const userAgent = req.get('User-Agent');
-    const result = await api.post(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await api.post(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -418,7 +449,11 @@ router.post('/', isAuthenticated, async (req, res) => {
 router.post('/Inventory/AdjustmentBatch', async (req, res) => {
   try {
     const model = new INAdjustmentBatch();
-    const result = await model.post_adjustment(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await model.post_adjustment(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -434,7 +469,11 @@ router.post('/Inventory/AdjustmentBatch', async (req, res) => {
 router.post('/MO', async (req, res) => {
   try {
     const mo = new MO();
-    const result = await mo.post(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await mo.post(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -450,7 +489,11 @@ router.post('/MO', async (req, res) => {
 router.post('/MU', async (req, res) => {
   try {
     const mu = new MU();
-    const result = await mu.post(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await mu.post(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -466,7 +509,11 @@ router.post('/MU', async (req, res) => {
 router.post('/PMDailyLogDetail', async (req, res) => {
   try {
     const issue = new PMDailyLogDetail();
-    const result = await issue.post(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await issue.post(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -498,7 +545,11 @@ router.post('/PMDailyLogDetail', async (req, res) => {
 router.post('/PMIssue', async (req, res) => {
   try {
     const issue = new PMIssue();
-    const result = await issue.post(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await issue.post(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -514,7 +565,11 @@ router.post('/PMIssue', async (req, res) => {
 router.post('/RFI', async (req, res) => {
   try {
     const rfi = new RFI();
-    const result = await rfi.post(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await rfi.post(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -546,7 +601,11 @@ router.post('/RFI', async (req, res) => {
 router.post('/JobPhase', async (req, res) => {
   try {
     const jp = new JobPhase();
-    const result = await jp.post(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await jp.post(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -578,7 +637,11 @@ router.post('/JobPhase', async (req, res) => {
 router.post('/Equipment', async (req, res) => {
   try {
     const em = new Equipment();
-    const result = await em.post(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await em.post(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -594,7 +657,11 @@ router.post('/Equipment', async (req, res) => {
 router.post('/Equipment/Transfer', async (req, res) => {
   try {
     const em = new Equipment();
-    const result = await em.post_transfer(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await em.post_transfer(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -610,7 +677,11 @@ router.post('/Equipment/Transfer', async (req, res) => {
 router.post('/Equipment/Part/Transfer', async (req, res) => {
   try {
     const em = new Equipment();
-    const result = await em.post_part_transfer(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await em.post_part_transfer(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -626,7 +697,11 @@ router.post('/Equipment/Part/Transfer', async (req, res) => {
 router.delete('/Inventory/AdjustmentBatch', async (req, res) => {
   try {
     const model = new INAdjustmentBatch();
-    const result = await model.delete_adjustment(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await model.delete_adjustment(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -642,7 +717,11 @@ router.delete('/Inventory/AdjustmentBatch', async (req, res) => {
 router.delete('/PMDailyLogDetail', async (req, res) => {
   try {
     const issue = new PMDailyLogDetail();
-    const result = await issue.delete_detail(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await issue.delete_detail(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -658,7 +737,11 @@ router.delete('/PMDailyLogDetail', async (req, res) => {
 router.delete('/Attachment', async (req, res) => {
   try {
     const att = new Attachment();
-    const result = await att.delete(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await att.delete(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -674,7 +757,11 @@ router.delete('/Attachment', async (req, res) => {
 router.delete('/PMIssue', async (req, res) => {
   try {
     const issue = new PMIssue();
-    const result = await issue.delete_issue(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await issue.delete_issue(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -690,7 +777,11 @@ router.delete('/PMIssue', async (req, res) => {
 router.delete('/RFI', async (req, res) => {
   try {
     const rfi = new RFI();
-    const result = await rfi.delete_rfi(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await rfi.delete_rfi(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -722,7 +813,11 @@ router.delete('/RFI', async (req, res) => {
 router.delete('/Equipment/Transfer', async (req, res) => {
   try {
     const em = new Equipment();
-    const result = await em.delete_transfer(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await em.delete_transfer(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
@@ -738,7 +833,11 @@ router.delete('/Equipment/Transfer', async (req, res) => {
 router.delete('/Equipment/Part/Transfer', async (req, res) => {
   try {
     const em = new Equipment();
-    const result = await em.delete_part_transfer(req.body);
+    const data = parseBody(req.body);
+    if (!data) {
+      return res.status(400).json({ message: 'No data or invalid JSON' });
+    }
+    const result = await em.delete_part_transfer(data);
     res.set('Access-Control-Allow-Origin', '*');
     if (result.error) {
       res.status(result.num_code).json({ message: result.error });
