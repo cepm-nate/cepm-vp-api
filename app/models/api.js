@@ -276,7 +276,7 @@ class API {
     }
 
     const outputs = result.recordset;
-    if (!outputs) return { user: outputs, message: result.output.ReturnMessage };
+    if (!outputs || !outputs[0]) return { user: outputs, message: result.output.ReturnMessage };
 
     outputs[0]['SecurityGroups'] = outputs[0]['SecurityGroups'].split(',').map(Number);
     return { user: outputs, message: result.output.ReturnMessage };
