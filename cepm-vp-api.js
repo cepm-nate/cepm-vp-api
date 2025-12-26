@@ -1,21 +1,25 @@
 if (!process.env.LDAP_URL) require('dotenv').config();
 
 // For tracing
-if (process.env.DD_ENABLED === 'true') {
-  const tracer = require('dd-trace').init({
-    service: 'cepm-api',
-    logInjection: true,
-    plugins: {
-      express: {
-        middleware: true
-      },
-      socketio: {
-        enabled: true
-      }
-    }
-  });
-  process.on('uncaughtException', (err) => { tracer.scope().active()?.addTags({ 'error.type': err.name, 'error.message': err.message, 'error.stack': err.stack }); });
-}
+// if (process.env.DD_ENABLED === 'true') {
+//   const tracer = require('dd-trace').init({
+//     service: 'cepm-api',
+//     logInjection: true,
+//     plugins: {
+//       express: {
+//         middleware: true
+//       },
+//       socketio: {
+//         enabled: true
+//       }
+//     }
+//   });
+//   process.on('uncaughtException', (err) => { tracer.scope().active()?.addTags({ 'error.type': err.name, 'error.message': err.message, 'error.stack': err.stack }); });
+// }
+
+// sentry.io tracing
+require("./instrument.js");
+require("./app/utils/sentry-sql-patch"); // to add more info
 
 const compression = require("compression");
 const express = require("express"); // call express

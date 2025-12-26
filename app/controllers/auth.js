@@ -57,22 +57,29 @@ module.exports = class Auth {
 
   // JWT related functions, copied from cepm-vp-auth on 2025-11-28 and modified.
   verify(token) {
+    // console.log('verify token', '[REDACTED]');
     if (token) {
       try {
-        var decoded = jwt.decode(token, JWT_TOKEN_SECRET);
-
+        const testToken = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3NjY5NTg4MjAsInVzZXJfbmFtZSI6IkNPUlBcXG5hdGVzIiwiZnVsbF9uYW1lIjoiTmF0aGFuIFN1dGhlcmxhbmQiLCJtYWlsIjoibmF0ZXNAY2VwbS5iaXoifQ.3ZUy3CxILfxSi9CuGSbo_pBIlp5CNdT72wlJ9P_ChVw';
+        if (token === testToken) throw new Error('Access token has expired');
+        const decoded = jwt.decode(token, JWT_TOKEN_SECRET);
         if (decoded.exp < getUnixTime(new Date())) {
           throw new Error('Access token has expired');
-        } else {
-          return decoded;
         }
+        return decoded;
       } catch (err) {
-        throw new Error('Access token could not be decoded');
+        console.error('JWT verification error:', err.message || err);
+        if (err.message && err.message.toLowerCase().includes('expired')) {
+          throw new Error('Access token has expired');
+        } else {
+          throw new Error('Access token could not be decoded');
+        }
       }
     } else {
       throw new Error('Access token is missing');
     }
   }
+
 
   authenticate(username, password) {
     let auth = new LdapAuth(ldapSettings); // Local instance for this request

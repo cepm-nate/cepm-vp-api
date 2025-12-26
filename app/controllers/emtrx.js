@@ -74,7 +74,7 @@ module.exports = class Emtrx {
 		});
 
 		return Promise.allSettled(promises)
-		.then((rs) => this._querySince(rs.output.curChangeNum)) // was Promise.all, with rs[0].
+		.then((rs) => this._querySince(rs[0].value.output.curChangeNum)) // was Promise.all, with rs[0].
 		.then((rs) => this._transformIntoRows(rs) )
 		.then((freshSaved) => this._composeResult(freshSaved,req.body));
 	}

@@ -50,6 +50,7 @@ class API {
   }
 
   strip_out_restricted_columns(data) {
+    if (!data.columns) return data;
     this.restrictedColumns.forEach(badCol => {
       const index = data.columns.indexOf(badCol);
       if (index !== -1) {
@@ -298,20 +299,20 @@ class API {
     return { companies: result.recordset, message: result.output.ReturnMessage };
   }
 
-  async get_plugins_settings(data, updatedData, codata) {
-    if (!data.pluginsSettings) return updatedData;
-
+  async get_plugins_settings(data, pluginName, codata = null) {
     let co;
     if (data.Co) {
       co = data.Co;
     } else if (data.CO) {
       co = data.CO;
-    } else {
+    } else if (codata && codata.companies && codata.companies[0]) {
       co = codata.companies[0].HQCo;
+    } else {
+      co = 0;  // Default to 1 if no company data
     }
 
     const username = data.VPUserName;
-    const plugins = data.pluginsSettings.join(',');
+    const plugins = pluginName;
 
     await this.connect(data);
 
@@ -328,17 +329,7 @@ class API {
       throw new Error(result.output.ReturnMessage);
     }
 
-    const outputs = {};
-    result.recordset.forEach(row => {
-      if (!outputs[row.PluginName]) {
-        outputs[row.PluginName] = [];
-      }
-      outputs[row.PluginName].push(row);
-    });
-
-    updatedData.settingsForPlugins = outputs;
-
-    return updatedData;
+    return { plugins: result.recordset, message: result.output.ReturnMessage };
   }
 
   get_key_fields_for_table(table_name) {
@@ -461,11 +452,13 @@ class API {
       const result = await request.execute('mmspSyncDataFromClientV2_2');
 
       const rcode = parseInt(result.output.rcode, 10);
-      const out_msg = result.output.ReturnMessage;
+      const message = result.output.ReturnMessage;
 
       if (rcode === 1) {
-        throw new Error(out_msg);
+        throw new Error(message);
       }
+
+      return { rcode, message, recordset: result.recordset };
     } catch (err) {
       console.error('Error in sync_out:', err);
       throw err;
@@ -515,12 +508,24 @@ class API {
     this.VPUSERNAME = data.VPUserName;
 
     const codata = await this.get_company_data(data);
-    const user = await this.get_user_data(data);
-    const updatedUser = await this.get_plugins_settings(data, user, codata);
+    const userResult = await this.get_user_data(data);
+    const settingsResult = await this.get_plugins_settings(data, data.pluginsSettings.join(','), codata);
+
+    const updatedUser = { ...userResult.user[0] };  // Clone to avoid mutating
+    updatedUser.settingsForPlugins = {};
+
+    if (settingsResult.plugins) {
+      settingsResult.plugins.forEach(row => {
+        if (!updatedUser.settingsForPlugins[row.PluginName]) {
+          updatedUser.settingsForPlugins[row.PluginName] = [];
+        }
+        updatedUser.settingsForPlugins[row.PluginName].push(row);
+      });
+    }
 
     return {
-      message: updatedUser.message,
-      user: updatedUser.user[0],
+      message: settingsResult.message,
+      user: updatedUser,
       companies: codata.companies,
       VPUserName: data.VPUserName,
       settings: updatedUser.settingsForPlugins,

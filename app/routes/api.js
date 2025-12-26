@@ -151,6 +151,9 @@ router.get('/testserver', (req, res) => {
   res.json({ message: 'Server is running' });
 });
 
+// Heatlh endpoint
+router.get('/health', (req, res) => res.status(200).send('OK'));
+
 // Latest PG Build
 router.get('/latest_pg_build', async (req, res) => {
   const { pgid } = req.query;
