@@ -8,7 +8,7 @@ const { version } = require('./package.json');
 Sentry.init({
   dsn: "https://e61c339f05c76ad6c1d782b9acbacbf3@o4510524012167168.ingest.us.sentry.io/4510603128668160",
   integrations: [
-    Sentry.nodeProfilingIntegration(),
+    nodeProfilingIntegration(),
     Sentry.consoleLoggingIntegration({ levels: ["log", "warn", "error"] }),
   ],
   release: `cepm-api@${version}`,
