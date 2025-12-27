@@ -74,7 +74,19 @@ module.exports = class Emtrx {
 		});
 
 		return Promise.allSettled(promises)
-		.then((rs) => this._querySince(rs[0].value.output.curChangeNum)) // was Promise.all, with rs[0].
+		.then((rs) => {
+			let changeNum = null;
+			for (let r of rs) {
+				if (r.status === 'fulfilled' && r.value.output) {
+					changeNum = r.value.output.curChangeNum;
+					break;
+				}
+			}
+			if (changeNum === null) {
+				return Promise.reject(new Error('All upsert operations failed'));
+			}
+			return this._querySince(changeNum);
+		})
 		.then((rs) => this._transformIntoRows(rs) )
 		.then((freshSaved) => this._composeResult(freshSaved,req.body));
 	}
