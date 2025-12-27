@@ -2,12 +2,15 @@
 const Sentry = require("@sentry/node");
 const { nodeProfilingIntegration } = require("@sentry/profiling-node");
 
+// Read the version from package.json
+const { version } = require('./package.json');
+
 Sentry.init({
   dsn: "https://e61c339f05c76ad6c1d782b9acbacbf3@o4510524012167168.ingest.us.sentry.io/4510603128668160",
   integrations: [
     nodeProfilingIntegration(),
   ],
-
+  release: `cepm-vp-api@${version}`,
   // Send structured logs to Sentry
   enableLogs: true,
   // Tracing
