@@ -74,19 +74,25 @@ module.exports = class Emtrx {
 		});
 
 		return Promise.allSettled(promises)
-		.then((rs) => {
-			let changeNum = null;
-			for (let r of rs) {
-				if (r.status === 'fulfilled' && r.value.output) {
-					changeNum = r.value.output.curChangeNum;
-					break;
-				}
-			}
-			if (changeNum === null) {
-				return Promise.reject(new Error('All upsert operations failed'));
-			}
-			return this._querySince(changeNum);
-		})
+    .then((rs) => {
+        // console.log('Debug: allSettled results for deletes:', rs); // NEW: Log full results for inspection
+        let changeNum = null;
+        for (let r of rs) {
+          if (r.status === 'fulfilled') {
+            // console.log('Debug: fulfilled result output:', r.value.output); // NEW: Inspect successful SP outputs
+            if (r.value.output) {
+              changeNum = r.value.output.curChangeNum;
+              break;
+            }
+          } else {
+           // console.log('Debug: rejected reason:', r.reason); // NEW: Log why each delete failed
+          }
+        }
+        if (changeNum === null) {
+          return Promise.reject(new Error('All upsert operations failed'));
+        }
+        return this._querySince(changeNum);
+     })
 		.then((rs) => this._transformIntoRows(rs) )
 		.then((freshSaved) => this._composeResult(freshSaved,req.body));
 	}
@@ -217,6 +223,21 @@ module.exports = class Emtrx {
 		tvpParts.columns.add('ReceivedOn', 		sql.VarChar(19),	{nullable: true}	);
 		tvpParts.columns.add('ReceivedMemo', 	sql.VarChar(120),	{nullable: true}	);
 		tvpParts.columns.add('Notes', 			sql.VarChar(4000),	{nullable: true}	);
+
+		// For delete operations, ensure NOT NULL fields have dummy values to conform to the TVP type
+    if (isDelete) {
+      // Provide dummy values for NOT NULL columns that can't be null (SP delete path only uses LocationHistoryId)
+      const dummyDate = '1900-01-01 00:00:00.000'; // Valid placeholder date
+      tx = {
+        ...tx,
+        DateTimeIn: tx.DateTimeIn || '1900-01-01T00:00:00.000Z', // For DateIn formatting
+        CreatedDate: tx.CreatedDate || '1900-01-01T00:00:00.000Z', // For CreatedDate formatting
+        EMCo: tx.EMCo || 1, // Dummy company ID (adjust if 0 isn't valid)
+        Equipment: tx.Equipment || 'DUMMY', // Dummy equipment
+        Sequence: tx.Sequence || 1, // Dummy sequence
+        CreatedBy: tx.CreatedBy || 'System' // Already 'Nobody', but ensure not null
+      };
+    }
 
 		// Copy data from tx into tvpTrx
 		tvpTrx.rows.add(
