@@ -509,7 +509,8 @@ class API {
 
     const codata = await this.get_company_data(data);
     const userResult = await this.get_user_data(data);
-    const settingsResult = await this.get_plugins_settings(data, data.pluginsSettings.join(','), codata);
+    const settingsResult = await this.get_plugins_settings(data, (data.pluginsSettings || []).join(','), codata);
+
 
     const updatedUser = { ...userResult.user[0] };  // Clone to avoid mutating
     updatedUser.settingsForPlugins = {};

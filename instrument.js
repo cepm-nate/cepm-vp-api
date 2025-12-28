@@ -10,6 +10,7 @@ Sentry.init({
   integrations: [
     nodeProfilingIntegration(),
     Sentry.consoleLoggingIntegration({ levels: ["log", "warn", "error"] }),
+    Sentry.httpIntegration({ tracing: true }),
   ],
   release: `cepm-api@${version}`,
   // Send structured logs to Sentry
