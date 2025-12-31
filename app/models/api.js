@@ -184,7 +184,7 @@ class API {
 
     let arColumns;
     // Always grab the column names from what was returned from the DB.
-    arColumns = Object.keys(result.recordset[0]).filter(k => k !== '_CTA_').sort();
+    arColumns = result.output.columns.split(',').filter((c) => c).sort();
     // if (result.recordset.length > 0) {
     //   arColumns = Object.keys(result.recordset[0]).filter(k => k !== '_CTA_').sort();
     // } else {
