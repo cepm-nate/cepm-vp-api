@@ -1,4 +1,5 @@
 const MssqlConnection = require('../db/mssql');
+const { VarChar, Int, MAX } = require('mssql');
 
 class API {
   constructor() {
@@ -147,11 +148,11 @@ class API {
     request.input('colNameAge', colNameAge);
     request.input('colValueAge', colValueAge);
     request.input('last_synced_version', lastSyncedVersion);
-    request.output('columns', columns);
-    request.output('colDataTypes', colDataTypes);
-    request.output('primarykeys', primarykeys);
-    request.output('rcode', 0);
-    request.output('ReturnMessage', '');
+    request.output('columns', VarChar(MAX), columns);
+    request.output('colDataTypes', VarChar(MAX), colDataTypes);
+    request.output('primarykeys', VarChar(MAX), primarykeys);
+    request.output('rcode', Int, 0);
+    request.output('ReturnMessage', VarChar(MAX), '');
 
     const result = await request.execute('mmspGetUpdatedDataV2_1');
 
