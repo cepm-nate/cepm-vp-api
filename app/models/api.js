@@ -147,7 +147,7 @@ class API {
     request.input('colNameAge', colNameAge);
     request.input('colValueAge', colValueAge);
     request.input('last_synced_version', lastSyncedVersion);
-    request.input('columns', columns);
+    request.output('columns', columns);
     request.output('colDataTypes', colDataTypes);
     request.output('primarykeys', primarykeys);
     request.output('rcode', 0);
