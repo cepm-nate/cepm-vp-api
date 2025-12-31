@@ -159,8 +159,10 @@ class API {
     const outMsg = result.output.ReturnMessage;
 
     if (rcode === 2) {
+      // const cols = columns.split(',').filter((c) => c).sort();  // Sort to match
+      const cols = result.output.columns.split(',').filter((c) => c).sort();
       return {
-        columns: columns.split(',').filter((c) => c),
+        columns: cols,
         colDataTypes: [],
         primary_keys: result.output.primarykeys.split(',').filter(c => c),
         saved: [],
@@ -174,17 +176,20 @@ class API {
       throw new Error(outMsg);
     }
 
+    // At this point rcode must be 0.
 
     const saved = [];
     const deleted = [];
     const tempSavedArray = [];
 
     let arColumns;
-    if (result.recordset.length > 0) {
-      arColumns = Object.keys(result.recordset[0]).filter(k => k !== '_CTA_').sort();
-    } else {
-      arColumns = columns.split(',').filter(c => c);
-    }
+    // Always grab the column names from what was returned from the DB.
+    arColumns = Object.keys(result.recordset[0]).filter(k => k !== '_CTA_').sort();
+    // if (result.recordset.length > 0) {
+    //   arColumns = Object.keys(result.recordset[0]).filter(k => k !== '_CTA_').sort();
+    // } else {
+    //   arColumns = columns.split(',').filter(c => c);
+    // }
 
     // Process recordset
     result.recordset.forEach(arr => {
