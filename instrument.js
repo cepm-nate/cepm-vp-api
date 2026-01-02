@@ -25,6 +25,7 @@ Sentry.init({
   // For example, automatic IP address collection on events
   sendDefaultPii: true,
 
+  // Redact sensitive information from events
   beforeSend: function(event) {
     if (event.request) {
       // Scrub password in URL params
@@ -52,12 +53,14 @@ Sentry.init({
     return event;
   },
 
+  // Don't send common / health related things
   beforeSendTransaction: (transaction) => {
     transaction.spans = transaction.spans.filter((span) => {
       if (span.op === 'middleware.express') return false;
-      if (span.description === '/pgbVersion') return false;
-      if (span.description === '/api/testserver') return false;
-      if (span.op === 'db.statement' && span.description?.trim() === 'SELECT 1;') return false;
+      if (span.op === 'router.express' && span.description?.trim() === '/pgbVersion') return false;
+      if (span.op === 'request_handler.express' && span.description?.trim() === '/api/testserver') return false;
+      if (span.op === 'db' && span.description?.trim() === 'SELECT 1;') return false;
+      if (span.op === 'db' && span.description?.trim() === 'SELECT CHANGE_TRACKING_CURRENT_VERSION() AS ctnum') return false;
       return true;
     });
     return transaction;
