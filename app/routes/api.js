@@ -83,11 +83,13 @@ function isAuthenticated(req, res, next) {
     })
     .then((r) => next())
     .catch((e) => {
-      console.log(
-        "... failed authentication for",
-        req.headers.username,
-        e.message,
-      );
+      if (req.headers.username || req.query.VPUserName) {
+        console.log(
+          "... failed authentication for",
+          req.headers.username || req.query.VPUserName,
+          e.message,
+        );
+      }
       if (e.response) {
         res.status(e.response.status).json({ message: e.response.data.error });
         console.warn(e.response.data.error);
