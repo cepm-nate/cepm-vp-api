@@ -55,6 +55,8 @@ Sentry.init({
   beforeSendTransaction: (transaction) => {
     transaction.spans = transaction.spans.filter((span) => {
       if (span.op === 'middleware.express') return false;
+      if (span.description === '/pgbVersion') return false;
+      if (span.description === '/api/testserver') return false;
       if (span.op === 'db.statement' && span.description?.trim() === 'SELECT 1;') return false;
       return true;
     });
