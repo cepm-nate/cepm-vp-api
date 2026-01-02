@@ -23,24 +23,61 @@ module.exports = class Emtrx {
     return parseISO(st);
   }
 
-	findSince(req){
-		var last_seq = req.params.last_seq;
-		this.start = new Date();
+	// findSince(req){
+	// 	var last_seq = req.params.last_seq;
+	// 	this.start = new Date();
 
-		var promises = [
-			this._querySince(last_seq).then( this._transformIntoRows ),
-			this._getChangeTrackingCurrentVersion(),
-		];
+	// 	var promises = [
+	// 		this._querySince(last_seq).then( this._transformIntoRows ),
+	// 		this._getChangeTrackingCurrentVersion(),
+	// 	];
 
-		return Promise.all(promises)
-		.then( results => {
-			return {
-				Transfers	: results[0],
-				LAST_SEQ	: results[1],
-				ExecutionTime : new Date() - this.start
-			}
-		})
-	}
+	// 	return Promise.all(promises)
+	// 	.then( results => {
+	// 		return {
+	// 			Transfers	: results[0],
+	// 			LAST_SEQ	: results[1],
+	// 			ExecutionTime : new Date() - this.start
+	// 		}
+	// 	})
+	// }
+
+	async findSince(req) {
+    // Start execution timer
+    this.start = new Date();
+
+    try {
+      // Basic input validation: ensure last_seq is a non-negative integer string
+      const lastSeqStr = req.params.last_seq;
+      if (!/^\d+$/.test(lastSeqStr)) {
+        throw new Error(`Invalid last_seq parameter: "${lastSeqStr}". Must be a non-negative integer.`);
+      }
+      const lastSeq = Number(lastSeqStr); // Convert to number for SQL (as before)
+
+      // Fetch and transform the query results (sequential to avoid DB waiting issues)
+      const rows = await this._querySince(lastSeq);
+      const querySinceResult = await this._transformIntoRows(rows);
+
+      // Now fetch the change-tracking version (after the main query completes, to avoid waiting)
+      const currentChangeTrackingVersion = await this._getChangeTrackingCurrentVersion();
+
+      // Compute execution time
+      const executionTime = new Date() - this.start;
+
+      // Return the response object
+      return {
+        Transfers: querySinceResult,
+        LAST_SEQ: currentChangeTrackingVersion,
+        ExecutionTime: executionTime,
+      };
+    } catch (error) {
+      // Log the error for debugging (enhance with your logger if available)
+      console.error('Error in findSince():', error.message, error.stack);
+
+      // Rethrow or return an error response (adjust based on your API error handling)
+      throw new Error(`Failed to fetch equipment transfers since sequence ${req.params.last_seq}: ${error.message}`);
+    }
+  }
 
 	findSingle(req){
 		var id = req.params.id;
