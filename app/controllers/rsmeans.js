@@ -3,8 +3,7 @@ const values 			    = require('object.values');
 const fetch			        = require('node-fetch'); // V2
 const plumbCache            = require('../cache/plumb.json');
 const mechCache            = require('../cache/mech.json');
-if (!Object.values) values.shim();
-
+/* Hardcoded cookies removed - now passed via constructor */
 // ======================================================================================
 // These global vars can be multiple lines (for easy copy/paste), as I TRIM them later.
 
@@ -34,72 +33,31 @@ module.exports = class RSMeans {
 
   uri = 'https://www.rsmeansonline.com/SearchData/LoadGridWithCriteria';
 
-  headers = {
-    "accept": "application/json, text/javascript, */*; q=0.01",
-    "accept-language": "en-US,en;q=0.9",
-    "cache-control": "no-cache",
-    "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-    "pragma": "no-cache",
-    "sec-ch-ua": "\" Not;A Brand\";v=\"99\", \"Google Chrome\";v=\"141\", \"Chromium\";v=\"141\"",
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": "\"Windows\"",
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-site": "same-origin",
-    "validationtoken": VALIDATION_TOKEN.trim(),
-    "x-requested-with": "XMLHttpRequest",
-    "cookie": COOKIE.trim(),
-    "Referer": "https://www.rsmeansonline.com/SearchData",
-    "Referrer-Policy": "strict-origin-when-cross-origin",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
+  mCostDataOb = {
+    CostData: '.....Mechanical',
+    CostDataId: 26
   };
 
-  mCostDataOb = { CostData: '.....Mechanical', CostDataId: 26 };
-
-  pCostDataOb = { CostData: '.....Plumbing', CostDataId: 27 };
-
-  choiceOb = this.mCostDataOb; // swap mCostDataOb and pCostDataOb
-
-  bodyArgs = {
-    LaborId: 'STD',
-    DataTypeId: '1',
-    CostData: this.choiceOb.CostData, // '.....Plumbing' or '.....Mechanical'
-    CostDataId: this.choiceOb.CostDataId, // 27 for plumbing, 26 for mechanical
-    DataReleaseId: this.dataReleaseId,
-    DataFormatCode: 'MF04',
-    Keywords: '',
-    DivisionCode: '01',
-    'Location.CityName': 'National+Average',
-    MeasurementType: 'US Standard',
-    SetCustomCostData: 'false',
-    DataType: 'Unit',
-    LaborType: 'Standard+Union',
-    DataRelease: this.dataRelease,
-    DataFormatName: 'MasterFormat+2018',
-    CCILocation: 'National+Average',
-    CountryCode: 'NA',
-    'Location.CityId': '431',
-    SearchCriteria: 'index',
-    SearchTerm: '',
-    _search: 'false',
-    // nd	                :	'1642391164321', // Not needed, as it limits things to a sub-category!
-    rows: 200, // 200 appears to be the max
-    page: 1,
-    sidx: 'CostLineId',
-    sord: 'asc',
+  pCostDataOb = {
+    CostData: '.....Plumbing',
+    CostDataId: 27
   };
 
-  mDivisionCodes = [
+  mDivCodes = [
     '01', '02', '03', '04', '05', '06', '07', '09', '10',
     '11', '13', '14', '22', '23', '26',
     '28', '31', '32', '33', '44', '46',
   ];
 
-  pDivisionCodes = [
+  pDivCodes = [
     '01', '02', '03', '05', '06', '07', '09', '10',
     '11', '12', '13', '14', '21', '22', '23', '26',
     '28', '31', '32', '33', '41', '44', '46',
   ];
+
+  choiceOb = this.mCostDataOb; // swap mCostDataOb and pCostDataOb
+
+  divCodes = this.mDivCodes;
 
   indentTagMap = {
     ind1: ' ',
@@ -131,195 +89,276 @@ module.exports = class RSMeans {
     { idx: 36, name: 'RentPerMonth' },
   ];
 
-    // just useful as reference.
-    rowHdr = [
-        // false,              // [0]  // 'star',      -- no longer present in 2023!
-        // false,              // [1]  // 'lightning',  -- no longer present in 2023!
-        false,              // [2]  // 'blank1',
-        'RSMeansId',        // [3]
-        false,              // [4]  // 'blank2',
-        false,              // [5]  // 'leaf',
-        false,              // [6]  // 'blank3',
-        false,              // [7]  // 'pencil',
-        false,              // [8]  // 'shortDescWithTags',     // but is useful to get indent level!!
-        false,              // [9]  // 'fullDesc',
-        'LaborUM',          // [10] // 'unit'
-        'Crew',             // [11]
-        'DailyOutput',      // [12]
-        false,              // [13] // 'blank4',
-        'LaborHours',       // [14]
-        'Material',         // [15] // Bare Material
-        false,              // [16] // 'blank5',       // has something, but does not match in visible table
-        false,              // [17] // 'blank6',
-        'BareCostsLabor',   // [18] // 'Bare Labor',
-        'BareCostsEq',      // [19] // Bare Costs Equipment
-        'Total',            // [20] // 'bareTotal',
-        false,              // [21] // 'blank7',
-        false,              // [22] // 'blank8',
-        'TotalPlusOnP',     // [23] // 'totalO&P',
-        false,              // [24] // 'refPDF',
-        false,              // [25] // 'blank9',
-        false,              // [26] // 'blank10',
-        false,              // [27] // 'blank11',      // "Q" ?
-        false,              // [28] // 'blank12',      // "false"
-        false,              // [29] // 'blank13',      // 015433400070 // possibly internal ref numbers for rental equipment
-        false,              // [30] // 'blank14',      // 015904000070
-        false,              // [31] // 'blank15',      // "0"
-        false,              // [32] // 'blank16',      // "0"
-        false,              // [33] // 'blank17',
-        'Description',      // [34] // Like [8] but no HTML tags
-        'HourlyOpCost',     // [35] // Hourly Op. Cost
-        'RentPerDay',       // [36]
-        'RentPerWeek',      // [37]
-        'RentPerMonth',     // [38]
-        false,              // [39] // Looks like about HALF a day plus extra? Not shown on grid.
-    ]
+  // just useful as reference.
+  rowHdr = [
+      // false,              // [0]  // 'star',      -- no longer present in 2023!
+      // false,              // [1]  // 'lightning',  -- no longer present in 2023!
+      false,              // [2]  // 'blank1',
+      'RSMeansId',        // [3]
+      false,              // [4]  // 'blank2',
+      false,              // [5]  // 'leaf',
+      false,              // [6]  // 'blank3',
+      false,              // [7]  // 'pencil',
+      false,              // [8]  // 'shortDescWithTags',     // but is useful to get indent level!!
+      false,              // [9]  // 'fullDesc',
+      'LaborUM',          // [10] // 'unit'
+      'Crew',             // [11]
+      'DailyOutput',      // [12]
+      false,              // [13] // 'blank4',
+      'LaborHours',       // [14]
+      'Material',         // [15] // Bare Material
+      false,              // [16] // 'blank5',       // has something, but does not match in visible table
+      false,              // [17] // 'blank6',
+      'BareCostsLabor',   // [18] // 'Bare Labor',
+      'BareCostsEq',      // [19] // Bare Costs Equipment
+      'Total',            // [20] // 'bareTotal',
+      false,              // [21] // 'blank7',
+      false,              // [22] // 'blank8',
+      'TotalPlusOnP',     // [23] // 'totalO&P',
+      false,              // [24] // 'refPDF',
+      false,              // [25] // 'blank9',
+      false,              // [26] // 'blank10',
+      false,              // [27] // 'blank11',      // "Q" ?
+      false,              // [28] // 'blank12',      // "false"
+      false,              // [29] // 'blank13',      // 015433400070 // possibly internal ref numbers for rental equipment
+      false,              // [30] // 'blank14',      // 015904000070
+      false,              // [31] // 'blank15',      // "0"
+      false,              // [32] // 'blank16',      // "0"
+      false,              // [33] // 'blank17',
+      'Description',      // [34] // Like [8] but no HTML tags
+      'HourlyOpCost',     // [35] // Hourly Op. Cost
+      'RentPerDay',       // [36]
+      'RentPerWeek',      // [37]
+      'RentPerMonth',     // [38]
+      false,              // [39] // Looks like about HALF a day plus extra? Not shown on grid.
+  ]
 
-    constructor(){
-		this.start = 0;
+  constructor(options = {}) {
+    this.cookie = options.cookie || '';
+    this.validationToken = options.validationToken || '';
+    this.year = options.year || this.year;
+    this.dataReleaseId = options.dataReleaseId || this.dataReleaseId;
+    this.onLog = options.onLog || function() { console.log.apply(console, arguments); };
+    this.start = 0;
+    this.type = options.type || 'Mechanical';
+    this.choiceOb = this.type === 'Plumbing' ? this.pCostDataOb : this.mCostDataOb;
+    this.divCodes = this.type === 'Plumbing' ? this.pDivCodes : this.mDivCodes;
+    this.quarter = options.quarter || '4';
+    this.dataRelease = `Year+${this.year}+Quarter+${this.quarter}`;
+
+    // Initialize headers here, after options are set
+    this.headers = {
+      "accept": "application/json, text/javascript, */*; q=0.01",
+      "accept-language": "en-US,en;q=0.9",
+      "cache-control": "no-cache",
+      "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+      "pragma": "no-cache",
+      "sec-ch-ua": "\" Not;A Brand\";v=\"99\", \"Google Chrome\";v=\"141\", \"Chromium\";v=\"141\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\"",
+      "sec-fetch-dest": "empty",
+      "sec-fetch-mode": "cors",
+      "sec-fetch-site": "same-origin",
+      "validationtoken": this.validationToken,
+      "x-requested-with": "XMLHttpRequest",
+      "cookie": this.cookie,
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Iron Safari/537.36",
+      "Host": 'www.rsmeansonline.com',
+      "Origin": 'https://www.rsmeansonline.com',
+      "Referer": 'https://www.rsmeansonline.com/SearchData'
+    };
+
+    // Initialize bodyArgs here, after dataRelease is set
+    this.bodyArgs = {
+      LaborId: 'STD',
+      DataTypeId: '1',
+      CostData: this.choiceOb.CostData,
+      CostDataId: this.choiceOb.CostDataId,
+      DataReleaseId: this.dataReleaseId,
+      DataFormatCode: 'MF04',
+      Keywords: '',
+      DivisionCode: '01',
+      'Location.CityName': 'National+Average',
+      MeasurementType: 'US Standard',
+      SetCustomCostData: 'false',
+      DataType: 'Unit',
+      LaborType: 'Standard+Union',
+      DataRelease: this.dataRelease,  // Now uses the correct value
+      DataFormatName: 'MasterFormat+2018',
+      CCILocation: 'National+Average',
+      CountryCode: 'NA',
+      'Location.CityId': '431',
+      SearchCriteria: 'index',
+      SearchTerm: '',
+      _search: 'false',
+      rows: 200,
+      page: 1,
+      sidx: 'CostLineId',
+      sord: 'asc',
+    };
+  }
+
+  async obtainAndImport() {
+    // This is our main function which calls each step and logs results.
+    console.log('obtainAndImport start');
+
+    try {
+      let allRows = await this._recursiveFetchAndSave(this.choiceOb, this.divCodes, 1, 1, []);
+
+      // let allRows = await this._upsertIntoSQL(this._siteObToJSON(mechCache));
+      // let allRows = await this._upsertIntoSQL(this._siteObToJSON(plumbCache));
+
+      return allRows;
+    } catch (e) {
+      this.onLog(e.message, "error");
+      console.error(e.message); // Also log to server console for full details
+      return 'Fail!!';
     }
 
-    async obtainAndImport() {
-        // This is our main function which calls each step and logs results.
-        console.log('obtainAndImport');
+  }
 
-        try {
-            // let allRows = await this._recursiveFetchAndSave(this.mCostDataOb, this.mDivisionCodes, 1, 1, []);
-            let allRows = await this._recursiveFetchAndSave(this.pCostDataOb, this.pDivisionCodes, 1, 1, []);
+  _recursiveFetchAndSave(CostDataOb, divCodes, divIdx, pageNum, allRows) {
+    // Global var to track total pages for this CostDataOb
+    let totalPages;
 
-            // let allRows = await this._upsertIntoSQL(this._siteObToJSON(mechCache));
-            // let allRows = await this._upsertIntoSQL(this._siteObToJSON(plumbCache));
+    let msg = `Fetching page ${pageNum} for ${CostDataOb.CostData} div ${divCodes[divIdx]}`;
+    console.log(msg);
+    this.onLog(msg, "info");
 
-            return allRows;
-        } catch (e) {
-            console.warn(e);
-            return 'Fail!!';
-        }
+    return this._fetchFromSite(CostDataOb, divCodes[divIdx], pageNum)
+    .then((fetch_result) => {
+      totalPages = fetch_result.total;
+      let msg = `... retrieved ${fetch_result.rows.length} rows, total of ${totalPages} pages.`;
+      console.log(msg);
+      this.onLog(msg, "info");
+      allRows = [
+        ...allRows,
+        ...fetch_result.rows,
+      ];
+      return this._upsertIntoSQL(this._siteObToJSON(fetch_result))
+    })
+    .then(() => {
+      // Here is the recursive part -- not last page? increment and call again.
+      if (totalPages > pageNum) return this._recursiveFetchAndSave(CostDataOb, divCodes, divIdx, pageNum + 1, allRows);
+      // Last page, but not last divison? increment division and reset page to 1, call again.
+      else if (divCodes.length - 1 > divIdx) return this._recursiveFetchAndSave(CostDataOb, divCodes, divIdx + 1, 1, allRows);
+      // No more pages or divisions?
+      else return allRows;
+    })
+  }
 
+  async _fetchFromSite(CostDataOb, DivisionCode, page) {
+    const bodyArgs = {
+        ...this.bodyArgs,
+        nd: Date.now(),
+        page,
+        DivisionCode,
+        ...CostDataOb,
+    };
+    const constructedBody = this._constructBody(bodyArgs);
+
+    // // Log the full request details before sending
+    // console.log('RSMeans Request Details:');
+    // console.log('URL:', this.uri);
+    // console.log('Headers:', JSON.stringify(this.headers, null, 2));
+    // console.log('Body:', constructedBody);
+
+    const r = await fetch(this.uri, {
+      headers: this.headers,
+      body: constructedBody,
+      method: 'POST',
+    });
+    const text = await r.text();
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      // Depend on parent functions to catch and log error
+      throw new Error(e.message);
     }
+  }
 
-    _recursiveFetchAndSave(CostDataOb, divCodes, divIdx, pageNum, allRows) {
-        // Global var to track total pages for this CostDataOb
-        let totalPages;
+  _siteObToJSON(siteOb) {
+      let rows = siteOb.rows;
+      if (!rows) rows = siteOb;
+      if (!rows || rows.length === 0) return [];
+      const r1 = rows[0].cell;
+      if (r1.length !== this.rowHdr.length) {
+          console.error('Headers and cells do not match!!');
+          console.warn(r1);
+          throw new Error('Headers and cells do not match!!');
+      }
+      return rows.map((r) => {
+          const o = {};
+          this.cellMap.forEach((cm) => {
+              if (cm.name === 'RSMeansId') {
+                  o[cm.name] = this._createFormattedRSMeansId(r.cell[cm.idx]);
+              } else if (cm.idxWithTags) {
+                  // This is the description row
+                  o[cm.name] = this._createIndentedDescription(r,cm);
+              } else {
+                  // This is a normal field
+                  o[cm.name] = r.cell[cm.idx] === '' ? null : this._createFormattedValue(r.cell[cm.idx]);
+              }
+          })
+          return o;
+      })
+  }
 
-        console.log('Fetching page', pageNum,'for', CostDataOb.CostData, 'div', divCodes[divIdx]);
+  _createFormattedValue(val) {
+      // if there is a '%', then we try removing it and parseFloat the result. If that fails, we return the original
+      if (val.indexOf('%') > -1) {
+          // If we remove it, can the result be parsed to a float?
+          const f = parseFloat(val);
+          return isNaN(f) ? val : f / 100; // to handle percentages!!
+      } else {
+          // return whatever was given
+          return val;
+      }
+  }
 
-        return this._fetchFromSite(CostDataOb, divCodes[divIdx], pageNum)
-        .then((fetch_result) => {
-            totalPages = fetch_result.total;
-            console.log('... retrieved', fetch_result.rows.length,'rows, total of', totalPages, 'pages.');
-            allRows = [
-                ...allRows,
-                ...fetch_result.rows,
-            ];
-            return this._upsertIntoSQL(this._siteObToJSON(fetch_result))
-        })
-        .then(() => {
-            // Here is the recursive part -- not last page? increment and call again.
-            if (totalPages > pageNum) return this._recursiveFetchAndSave(CostDataOb, divCodes, divIdx, pageNum + 1, allRows);
-            // Last page, but not last divison? increment division and reset page to 1, call again.
-            else if (divCodes.length - 1 > divIdx) return this._recursiveFetchAndSave(CostDataOb, divCodes, divIdx + 1, 1, allRows);
-            // No more pages or divisions?
-            else return allRows;
-        })
-    }
+  _createIndentedDescription(rowOb, cellMapLine) {
+      // rowOb has { cell: ['x', 'z', 'zooolooo', '1231234']}
+      // cellMapLine has .idx, .idxWithTags, .name
+      // console.log(rowOb.cell[cellMapLine.idxWithTags].indexOf('<div class='), rowOb.cell[cellMapLine.idxWithTags] );
+      if (rowOb.cell[cellMapLine.idxWithTags].indexOf('<div class=') === 0) {
+          // console.log(rowOb.cell[cellMapLine.idxWithTags].split("'"));
+          const className = rowOb.cell[cellMapLine.idxWithTags].split("'")[1];
+          if (!className) return rowOb.cell[cellMapLine.idx];
+          if (!this.indentTagMap[className]) return rowOb.cell[cellMapLine.idx];
+          return `${this.indentTagMap[className]}${rowOb.cell[cellMapLine.idx]}`;
+      }
+      return rowOb.cell[cellMapLine.idx];
+  }
 
-    _fetchFromSite(CostDataOb, DivisionCode, page) {
-        return fetch(this.uri, {
-            headers: this.headers,
-            body: this._constructBody({
-                ...this.bodyArgs,
-                nd: Date.now(),
-                page,
-                DivisionCode,
-                ...CostDataOb,
-            }),
-            method: 'POST',
-        }).then((r) => r.json());
-    }
+  _createFormattedRSMeansId(rsmeans) {
+      // input  [221423337000]
+      // output [01 31 13.80 0150]
+      return [
+          rsmeans.slice(0,2),
+          ' ',
+          rsmeans.slice(2,4),
+          ' ',
+          rsmeans.slice(4,6),
+          '.',
+          rsmeans.slice(6,8),
+          ' ',
+          rsmeans.slice(8), // the rest
+      ].join('');
+  }
 
-    _siteObToJSON(siteOb) {
-        let rows = siteOb.rows;
-        if (!rows) rows = siteOb;
-        if (!rows || rows.length === 0) return [];
-        const r1 = rows[0].cell;
-        if (r1.length !== this.rowHdr.length) {
-            console.error('Headers and cells do not match!!');
-            console.warn(r1);
-            throw new Error('Headers and cells do not match!!');
-        }
-        return rows.map((r) => {
-            const o = {};
-            this.cellMap.forEach((cm) => {
-                if (cm.name === 'RSMeansId') {
-                    o[cm.name] = this._createFormattedRSMeansId(r.cell[cm.idx]);
-                } else if (cm.idxWithTags) {
-                    // This is the description row
-                    o[cm.name] = this._createIndentedDescription(r,cm);
-                } else {
-                    // This is a normal field
-                    o[cm.name] = r.cell[cm.idx] === '' ? null : this._createFormattedValue(r.cell[cm.idx]);
-                }
-            })
-            return o;
-        })
-    }
+  _constructBody(ob) {
+      return Object.keys(ob).map((k) => `${k}=${ob[k]}`).join('&')
+  }
 
-    _createFormattedValue(val) {
-        // if there is a '%', then we try removing it and parseFloat the result. If that fails, we return the original
-        if (val.indexOf('%') > -1) {
-            // If we remove it, can the result be parsed to a float?
-            const f = parseFloat(val);
-            return isNaN(f) ? val : f / 100; // to handle percentages!!
-        } else {
-            // return whatever was given
-            return val;
-        }
-    }
-
-    _createIndentedDescription(rowOb, cellMapLine) {
-        // rowOb has { cell: ['x', 'z', 'zooolooo', '1231234']}
-        // cellMapLine has .idx, .idxWithTags, .name
-        // console.log(rowOb.cell[cellMapLine.idxWithTags].indexOf('<div class='), rowOb.cell[cellMapLine.idxWithTags] );
-        if (rowOb.cell[cellMapLine.idxWithTags].indexOf('<div class=') === 0) {
-            // console.log(rowOb.cell[cellMapLine.idxWithTags].split("'"));
-            const className = rowOb.cell[cellMapLine.idxWithTags].split("'")[1];
-            if (!className) return rowOb.cell[cellMapLine.idx];
-            if (!this.indentTagMap[className]) return rowOb.cell[cellMapLine.idx];
-            return `${this.indentTagMap[className]}${rowOb.cell[cellMapLine.idx]}`;
-        }
-       return rowOb.cell[cellMapLine.idx];
-    }
-
-    _createFormattedRSMeansId(rsmeans) {
-        // input  [221423337000]
-        // output [01 31 13.80 0150]
-        return [
-            rsmeans.slice(0,2),
-            ' ',
-            rsmeans.slice(2,4),
-            ' ',
-            rsmeans.slice(4,6),
-            '.',
-            rsmeans.slice(6,8),
-            ' ',
-            rsmeans.slice(8), // the rest
-        ].join('');
-    }
-
-    _constructBody(ob) {
-        return Object.keys(ob).map((k) => `${k}=${ob[k]}`).join('&')
-    }
-
-	_upsertIntoSQL(rows) {
-        // return Promise.reject('TESTING');
-		return poolPromise.then((pool) => pool.request()
-            .input('JCCo'           ,sql.Int                , 1                     )
-			.input('Year'	        ,sql.Int                , parseInt(this.year)   )
-			.input('DataJSON'	    ,sql.VarChar(sql.MAX)   , JSON.stringify(rows)	)
-			.output('ReturnMessage'	,sql.VarChar(255)                               )
-			.execute('mspUpsertJCRSMeansFromJSON'               	                )
-		);
+	async _upsertIntoSQL(rows) {
+		const pool = await poolPromise;
+    return pool.request()
+      .input('JCCo', sql.Int, 1)
+      .input('Year', sql.Int, parseInt(this.year))
+      .input('DataJSON', sql.VarChar(sql.MAX), JSON.stringify(rows))
+      .output('ReturnMessage', sql.VarChar(255))
+      .execute('mspUpsertJCRSMeansFromJSON');
   };
 
 }

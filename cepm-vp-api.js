@@ -24,6 +24,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 // app.use(allowCrossDomain);
 app.use(compression());
+app.use(express.static("static"));
 
 // // Logging middleware
 // app.use((req, res, next) => {
@@ -54,3 +55,5 @@ app.use("/api", require("./app/routes/api"));
 app.listen(port, "0.0.0.0", function () {
   console.log("CEPM-VP-API calls happen on port " + port);
 });
+
+app.use("/api/rsmeans",require("./app/routes/rsmeans-route"));

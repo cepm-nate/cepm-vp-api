@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSMeans Import</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            font-family: monospace;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        #results {
+            margin-top: 20px;
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 4px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .status {
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 4px;
+        }
+
+        .status-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <h1>RSMeans Import</h1>
+    <div class="form-group">
+        <label for="cookie">COOKIE String</label>
+        <textarea id="cookie" rows="3" placeholder="Paste rsmo_session cookie here..." required></textarea>
+    </div>
+    <div class="form-group">
+        <label for="validationToken">VALIDATION_TOKEN String</label>
+        <input type="text" id="validationToken" placeholder="Paste __RequestVerificationToken value..." required>
+    </div>
+    <div class="form-group">
+        <label for="year">Year</label>
+        <input type="text" id="year" value="2026">
+    </div>
+    <div class="form-group">
+        <label for="dataReleaseId">Data Release ID</label>
+        <input type="text" id="dataReleaseId" value="95">
+    </div>
+    <div class="form-group">
+        <label for="quarter">Quarter</label>
+        <select id="quarter">
+            <option value="1">Quarter 1</option>
+            <option value="2">Quarter 2</option>
+            <option value="3">Quarter 3</option>
+            <option value="4" selected>Quarter 4</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="type">Type</label>
+        <select id="type">
+            <option value="Mechanical">Mechanical</option>
+            <option value="Plumbing">Plumbing</option>
+        </select>
+    </div>
+    <button id="startBtn" onclick="startImport()">START</button>
+    <div id="results"></div>
+    <script>
+        let eventSource = null;
+
+        function log(m, t) {
+            t = t || "info";
+            var r = document.getElementById("results");
+            var d = document.createElement("div");
+            d.className = "status status-" + t;
+            d.textContent = new Date().toLocaleTimeString() + ": " + m;
+            r.appendChild(d);
+            r.scrollTop = r.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById("results").innerHTML = "";
+        }
+
+        function startImport() {
+            var cookie = document.getElementById("cookie").value.trim();
+            var vt = document.getElementById("validationToken").value.trim();
+            var year = document.getElementById("year").value.trim();
+            var dataReleaseId = document.getElementById("dataReleaseId").value.trim();
+            var quarter = document.getElementById("quarter").value;
+            var type = document.getElementById("type").value;
+            if (!cookie || !vt) {
+                alert("Please provide both COOKIE and VALIDATION_TOKEN");
+                return;
+            }
+            clearResults();
+            document.getElementById("startBtn").disabled = true;
+            log("Starting import: " + type + " " + year + " Quarter " + quarter, "info");
+            if (eventSource) {
+                eventSource.close();
+            }
+            var params = new URLSearchParams({
+                cookie: cookie,
+                validationToken: vt,
+                year: year,
+                dataReleaseId: dataReleaseId,
+                quarter: quarter,
+                type: type
+            });
+            eventSource = new EventSource("/api/rsmeans/start?" + params.toString());
+            eventSource.onmessage = function(e) {
+                var d = JSON.parse(e.data);
+                log(d.message, d.type || "info");
+                if (d.done) {
+                    eventSource.close();
+                    document.getElementById("startBtn").disabled = false;
+                    log("Import complete!", "success");
+                }
+            };
+            eventSource.onerror = function(e) {
+                log("Connection error - may still be running", "error");
+                document.getElementById("startBtn").disabled = false;
+            };
+        }
+    </script>
+</body>
+</html>
