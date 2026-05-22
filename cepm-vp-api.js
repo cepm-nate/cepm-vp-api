@@ -56,4 +56,4 @@ app.listen(port, "0.0.0.0", function () {
   console.log("CEPM-VP-API calls happen on port " + port);
 });
 
-app.use("/api/rsmeans",require("./app/routes/rsmeans-route"));
+// app.use("/api/rsmeans", require("./app/routes/rsmeans-route"));
