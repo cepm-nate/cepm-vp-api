@@ -240,6 +240,9 @@ class API {
     const request = await this.db.request();
     request.input('co', co);
     request.input('last_synced_version', lastSyncedVersion);
+    request.output('columns', VarChar(MAX), '');
+    request.output('colDataTypes', VarChar(MAX), '');
+    request.output('primarykeys', VarChar(MAX), '');
     request.output('rcode', Int, 0);
     request.output('ReturnMessage', VarChar(MAX), '');
 
@@ -265,11 +268,12 @@ class API {
       throw new Error(outMsg);
     }
 
-    // Get column names from first record (excluding _CTA_)
-    const firstRecord = result.recordset[0] || {};
-    const arColumns = Object.keys(firstRecord).filter(k => k !== '_CTA_').sort();
+    // Parse metadata from SP output parameters
+    const spColumns = (result.output.columns || '').split(',').filter(c => c);
+    const spColDataTypes = (result.output.colDataTypes || '').split(',').filter(c => c);
+    const spPrimaryKeys = (result.output.primarykeys || '').split(',').filter(c => c);
 
-    // Process recordset - same as get_updated_data()
+    // Process recordset - map to arrays in column order
     const saved = [];
     const deleted = [];
 
@@ -279,9 +283,9 @@ class API {
       delete record._CTA_;
 
       if (cta === 'I' || cta === 'U') {
-        saved.push(arColumns.map(k => record[k]));
+        saved.push(spColumns.map(k => record[k]));
       } else if (cta === 'D') {
-        deleted.push(arColumns.map(k => record[k]));
+        deleted.push(spColumns.map(k => record[k]));
       }
     });
 
@@ -289,9 +293,9 @@ class API {
     const type = lastSyncedVersion === 0 ? 'full' : 'partial';
 
     return {
-      columns: arColumns,
-      colDataTypes: [], // Not needed - hardcoded in SP
-      primary_keys: [], // Not needed - hardcoded in SP
+      columns: spColumns,
+      colDataTypes: spColDataTypes,
+      primary_keys: spPrimaryKeys,
       saved: saved,
       deleted: deleted,
       message: outMsg,
