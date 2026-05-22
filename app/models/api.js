@@ -125,9 +125,9 @@ class API {
     let colValueCustom1 = data.colValueCustom1;
     if (colValueCustom1 === '') colValueCustom1 = null;
     const colNameAge = data.colNameAge;
-    const colValueAge = +data.colValueAge;
-    const lastSyncedVersion = +data.lastSyncedVersion;
-    const columns = data.columns.join(',');
+    const colValueAge = +data.colValueAge; // cast to numeric
+    const lastSyncedVersion = +data.lastSyncedVersion; // cast to numeric
+    const columns = data.columns.join(','); // converted from array to csv
 
     // OUTPUT parameters
     let primarykeys = '';
@@ -226,11 +226,105 @@ class API {
     return arToReturn;
   }
 
+  async get_updated_data_per_table(data) {
+    const table = data.table;
+    const co = data.Co;
+    const lastSyncedVersion = +data.lastSyncedVersion;
+
+    // Map table to stored procedure name
+    const spName = 'mmspGet' + table;
+
+    // Connect to the DB if needed
+    // await this.connect(data);
+
+    const request = await this.db.request();
+    request.input('co', co);
+    request.input('last_synced_version', lastSyncedVersion);
+    request.output('rcode', Int, 0);
+    request.output('ReturnMessage', VarChar(MAX), '');
+
+    const result = await request.execute(spName);
+
+    const rcode = parseInt(result.output.rcode, 10);
+    const outMsg = result.output.ReturnMessage;
+
+    if (rcode === 2) {
+      // No changes
+      return {
+        columns: [],
+        colDataTypes: [],
+        primary_keys: [],
+        saved: [],
+        deleted: [],
+        message: outMsg,
+        type: 'empty',
+        table: table,
+        version: lastSyncedVersion
+      };
+    } else if (rcode !== 0) {
+      throw new Error(outMsg);
+    }
+
+    // Get column names from first record (excluding _CTA_)
+    const firstRecord = result.recordset[0] || {};
+    const arColumns = Object.keys(firstRecord).filter(k => k !== '_CTA_').sort();
+
+    // Process recordset - same as get_updated_data()
+    const saved = [];
+    const deleted = [];
+
+    result.recordset.forEach(arr => {
+      const record = { ...arr };
+      const cta = record._CTA_;
+      delete record._CTA_;
+
+      if (cta === 'I' || cta === 'U') {
+        saved.push(arColumns.map(k => record[k]));
+      } else if (cta === 'D') {
+        deleted.push(arColumns.map(k => record[k]));
+      }
+    });
+
+    // Set sync type
+    const type = lastSyncedVersion === 0 ? 'full' : 'partial';
+
+    return {
+      columns: arColumns,
+      colDataTypes: [], // Not needed - hardcoded in SP
+      primary_keys: [], // Not needed - hardcoded in SP
+      saved: saved,
+      deleted: deleted,
+      message: outMsg,
+      type: (saved.length === 0 && deleted.length === 0) ? 'empty' : type,
+      table: table,
+      version: lastSyncedVersion
+    };
+  }
+
   // Placeholder for transform_container_into_psuedo_columns
   transform_container_into_psuedo_columns(data, updatedData) {
     // TODO: Implement transform_container_into_psuedo_columns as per PHP logic
     // This involves complex transformation of pseudo columns into container values
     return updatedData;
+  }
+
+  async get_sync_in_per_table(data) {
+    this.VPUSERNAME = data.VPUserName;
+
+    const transformedData = await this.get_updated_data_per_table(data);
+
+    return {
+      type: transformedData.type,
+      version: transformedData.version,
+      columns: transformedData.columns,
+      colDataTypes: transformedData.colDataTypes,
+      primaryKey: transformedData.primary_keys,
+      saved: transformedData.saved,
+      deleted: transformedData.deleted,
+      message: transformedData.message,
+      table: data.table,
+      VPUserName: data.VPUserName
+    };
   }
 
   async get_sync_in(data) {
@@ -239,10 +333,22 @@ class API {
     // Clean TABLE name and other stuff
     data = this.clean_data_in(data);
 
-    // Requesting psuedo columns?
+    // Removing psuedo columns -- only applicable to 'bPRMyTimesheetDetail', removes:
+    // GroupID
+    // HourlyPay
+    // PFFields
+    // udBatchStartTime
+    // udBatchStopTime
+    // udLunchLengthHrs
+    // udStartTime
+    // udStopTime
+    // udUOM
+    // udUnits
     data = await this.remove_psuedo_columns(data);
 
-    // Requesting attachment columns
+    // Removing attachment columns if they exist
+    // - AttachmentData
+    // - AttachmentFileType
     data = this.remove_attachment_columns(data);
 
     const updatedData = await this.get_updated_data(data);

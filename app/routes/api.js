@@ -288,6 +288,28 @@ router.get('/', (req, res) => {
   }
 });
 
+// SYNC Getter
+router.get('/sync', (req, res) => {
+  // authenticated behavior
+  isAuthenticated(req, res, async () => {
+    try {
+      const api = new API();
+      const userAgent = req.get('User-Agent');
+      const result = await api.get_sync_in_per_table(req.query);
+      res.set('Access-Control-Allow-Origin', '*');
+      if (result.error) {
+        res.status(result.num_code).json({ message: result.error });
+        await api.logSync(userAgent, req.query, 'in', result.num_code, 'Y', result.error, 'Y');
+      } else {
+        res.json(result);
+      }
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+});
+
 // PMDailyLogAttachment allForOne - no code in app uses this endpoint.
 // router.get('/PMDailyLogAttachment/allForOne', async (req, res) => {
 //   try {
