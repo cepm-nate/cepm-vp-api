@@ -268,26 +268,63 @@ class API {
       throw new Error(outMsg);
     }
 
-    // Parse metadata from SP output parameters
+    // Parse metadata from SP output parameters -- should be very quick
     const spColumns = (result.output.columns || '').split(',').filter(c => c);
     const spColDataTypes = (result.output.colDataTypes || '').split(',').filter(c => c);
     const spPrimaryKeys = (result.output.primarykeys || '').split(',').filter(c => c);
 
+
+    // OLD STYLE
     // Process recordset - map to arrays in column order
+    // const saved = [];
+    // const deleted = [];
+
+    // result.recordset.forEach(arr => {
+    //   const record = { ...arr };
+    //   const cta = record._CTA_;
+    //   delete record._CTA_;
+
+    //   if (cta === 'I' || cta === 'U') {
+    //     saved.push(spColumns.map(k => record[k]));
+    //   } else if (cta === 'D') {
+    //     deleted.push(spColumns.map(k => record[k]));
+    //   }
+    // });
+
+    // NEW STYLE
+    // Process recordset - Using precomputed map
+    const cols = spColumns;
+    const colCount = cols.length;
+
     const saved = [];
     const deleted = [];
 
-    result.recordset.forEach(arr => {
-      const record = { ...arr };
+    // One for-loop over recordset.
+    for (let i = 0, len = result.recordset.length; i < len; i++) {
+      const record = result.recordset[i];
       const cta = record._CTA_;
-      delete record._CTA_;
 
       if (cta === 'I' || cta === 'U') {
-        saved.push(spColumns.map(k => record[k]));
+        // init array of the right size
+        const row = new Array(colCount);
+        // loop for each value in array
+        for (let j = 0; j < colCount; j++) {
+          row[j] = record[cols[j]];
+        }
+        // push result into saved array
+        saved.push(row);
       } else if (cta === 'D') {
-        deleted.push(spColumns.map(k => record[k]));
+        // init array of the right size
+        const row = new Array(colCount);
+        // loop for each value in array
+        for (let j = 0; j < colCount; j++) {
+          row[j] = record[cols[j]];
+        }
+        // push result into deleted array
+        deleted.push(row);
       }
-    });
+    }
+
 
     // Set sync type
     const type = lastSyncedVersion === 0 ? 'full' : 'partial';
